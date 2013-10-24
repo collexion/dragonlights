@@ -2,10 +2,9 @@
 int delay_ms = 100;
 
 // light pins (EL + LED)
-int red_body_pin = 2;
-int green_body_pin = 3;
-int red_eye_pin = 12;
-int green_eye_pin = 13;
+int red_body_pin_start = 2;
+int green_body_pin_start = 6;
+int pins_per_color = 4;
 
 // state tracking for lighting programs
 int fade_index = 0;
@@ -13,9 +12,9 @@ int fade_ticks = 0;
 int program_mode_id = 0;
 
 // buttons!
-int program_button_solid_green = 11;
-int program_button_solid_red = 10;
-int program_button_fade_to_green = 9;
+int program_button_solid_green = 12;
+int program_button_solid_red = 11;
+int program_button_fade_to_green = 10;
 
 // button debouncing
 int button_pressed_state = LOW; // change for normally-open
@@ -24,23 +23,27 @@ int program_transition_to = 0;
 // light helper methods
 
 void turn_on_green() {
-  digitalWrite(green_body_pin, HIGH);
-  digitalWrite(green_eye_pin, HIGH);
+  for (int i=0; i<pins_per_color; i++) {
+    digitalWrite(green_body_pin_start + i, HIGH);
+  }
 }
 
 void turn_on_red() {
-  digitalWrite(red_body_pin, HIGH);
-  digitalWrite(red_eye_pin, HIGH);
+  for (int i=0; i<pins_per_color; i++) {
+    digitalWrite(red_body_pin_start + i, HIGH);
+  }
 }
 
 void turn_off_green() {
-  digitalWrite(green_body_pin, LOW);
-  digitalWrite(green_eye_pin, LOW);
+  for (int i=0; i<pins_per_color; i++) {
+    digitalWrite(green_body_pin_start + i, LOW);
+  }
 }
 
 void turn_off_red() {
-  digitalWrite(red_body_pin, LOW);
-  digitalWrite(red_eye_pin, LOW);
+  for (int i=0; i<pins_per_color; i++) {
+    digitalWrite(red_body_pin_start + i, LOW);
+  }
 }
 
 void pulse_green(int ticks) {
@@ -62,14 +65,15 @@ void pulse_red(int ticks) {
 }
 
 void setup() {
-  pinMode(red_body_pin, OUTPUT);
-  digitalWrite(red_body_pin, LOW);
-  pinMode(green_body_pin, OUTPUT);
-  digitalWrite(green_body_pin, LOW);
-  pinMode(red_eye_pin, OUTPUT);
-  digitalWrite(red_eye_pin, LOW);
-  pinMode(green_eye_pin, OUTPUT);
-  digitalWrite(green_eye_pin, LOW);
+  for (int i=0; i<pins_per_color; i++) {
+    pinMode(red_body_pin_start + i, OUTPUT);
+    digitalWrite(red_body_pin_start + i, LOW);
+  }
+  
+  for (int i=0; i<pins_per_color; i++) {
+    pinMode(green_body_pin_start + i, OUTPUT);
+    digitalWrite(green_body_pin_start + i, LOW);
+  }
   
   pinMode(program_button_solid_green, INPUT);
   digitalWrite(program_button_solid_green, HIGH);
@@ -79,6 +83,7 @@ void setup() {
   digitalWrite(program_button_fade_to_green, HIGH);
   
   Serial.begin(9600);
+  
 }
 
 void run_program_mode(int id) {
@@ -167,11 +172,36 @@ void program_fade_to_green() {
       // solid green!
       turn_off_red();
       turn_on_green();
+      program_mode_id = 0;
+      fade_index = 0;
+      fade_ticks = 0;
+      break;
     }
 }
 
+int current_pin = 0;
 void loop() {
- run_program_mode(program_mode_id);
- check_program_change();
- delay(delay_ms); // quarter-second ticks
+ //for(int i=0; i<pins_per_color*2; i++) {
+   //digitalWrite(i + red_body_pin_start, HIGH);
+   //digitalWrite(i + green_body_pin_start, HIGH);
+   //delay(300);
+   //digitalWrite(i + red_body_pin_start, LOW);
+   //digitalWrite(i + green_body_pin_start, LOW);
+ //}
+ //run_program_mode(program_mode_id);
+ //check_program_change();
+ 
+  digitalWrite(2, LOW);
+  digitalWrite(red_body_pin_start + current_pin, HIGH);
+  Serial.print("ON: ");
+  Serial.println(red_body_pin_start + current_pin);
+  delay(2000); // quarter-second ticks
+  digitalWrite(red_body_pin_start + current_pin, LOW);
+  digitalWrite(2, HIGH);
+  Serial.print("OFF: ");
+  Serial.println(red_body_pin_start + current_pin);
+  delay(2000);
+  current_pin++;
+  current_pin = current_pin % pins_per_color;
 }
+
